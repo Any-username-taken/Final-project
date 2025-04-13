@@ -327,7 +327,7 @@ class Enemy extends Sprite {
         this.firerate = firerate
 
         this.mSpeed = maxSpeed
-}}
+}} 
 
 
 class Bullet extends Sprite{
