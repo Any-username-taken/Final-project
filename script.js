@@ -9,6 +9,7 @@ let projectiles = []
 // 6.3 === full rotation new Component(..., angle)
 // anim var
 let playerSprite = "Sprites/Player/basic ship.png";
+let bulletSprite = "Sprites/Bullets/costume1.png";
 let imagesScale = 0.115;
 
 function startGame() {
@@ -44,6 +45,8 @@ class Sprite{
 
         this.image = new Image();
         this.image.src = imgPar.source; //Remember to make imgPar an obj in all instances
+
+        this.current_img = this.image
         
         this.pos = pos;
         
@@ -78,7 +81,7 @@ class Sprite{
 
         //Images anim
         
-        ctx.drawImage(this.image, -this.imgPar.width/2, -this.imgPar.height/2, this.imgPar.width, this.imgPar.height);
+        ctx.drawImage(this.current_img, -this.imgPar.width/2, -this.imgPar.height/2, this.imgPar.width, this.imgPar.height);
 
         ctx.restore();
     }
@@ -87,8 +90,13 @@ class Sprite{
 //Player class parent is Sprite
 
 class Player extends Sprite{
-    constructor(imgPar, pos, type, angle, health, firerate, maxSpeed) {
+    constructor(imgPar, imgbonus, pos, type, angle, health, firerate, maxSpeed) {
         super(imgPar, pos, type, angle, health)
+
+        this.imageDouble = new Image()
+        this.imageDouble.src = imgbonus
+
+        this.anim_len = 0
 
         this.firerate = firerate
         this.cooldown = 0
@@ -96,9 +104,15 @@ class Player extends Sprite{
 
         this.mouseX = 0
         this.mouseY = 0
+
+        this.mouseD = false
     }
 
     refresh() {
+        this.shoot()
+        this.actually_fire()
+        this.fire_anim()
+        this.reload()
         this.get_input()
         this.get_keydowns()
         this.get_angle()
@@ -247,14 +261,73 @@ class Player extends Sprite{
         })
     }
 
+    ran_bullet_angle(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        let ran = Math.floor(Math.random() * (max - min + 1)) + min;
+        console.log(ran)
+        return ran
+    }
+
     shoot() {
         document.addEventListener("mousedown", (event) => {
-            if (event.button === 0 && this.cooldown < 0.5) {
-                
+            if (event.button === 0) {
+                this.mouseD = true
             }
         })
+
+        document.addEventListener("mouseup", (event) => {
+            if (event.button === 0){
+                this.mouseD = false
+        }
+        })
+    }
+
+    actually_fire() {
+        if (this.mouseD  && this.cooldown < 0.5) {
+            if (this.type === "1" && this.firerate > 0.9) {
+                this.firerate -= 0.1
+            }
+            this.anim_len = 0.2
+            createBulletPlayer(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "P", this.angle + (this.ran_bullet_angle(-2, 2))/10, 1, 20, 10)
+            this.cooldown = this.firerate
+            this.pos.x -= Math.cos(this.angle) * 5;
+            this.pos.y -= Math.sin(this.angle) * 5;
+        }
+    }
+
+    fire_anim() {
+        if (this.anim_len > 0) {
+            this.current_img = this.imageDouble
+            this.anim_len -= 0.1
+        } else {
+            this.current_img = this.image
+        }
+    }
+
+    reload() {
+        if (this.cooldown > 0.5) {
+            this.cooldown -= 0.1
+        }
+
+        if (this.type === "1" && this.firerate < 3 && this.mouseD === false) {
+            this.firerate += 0.1
+        }
     }
 }
+
+
+class Enemy extends Sprite {
+    constructor(imgPar, imgbonus, pos, type, angle, health, firerate, maxSpeed) {
+        super(imgPar, pos, type, angle, health)
+
+        this.imageBonus = new Image()
+        this.imageBonus.src = imgbonus
+
+        this.firerate = firerate
+
+        this.mSpeed = maxSpeed
+}}
 
 
 class Bullet extends Sprite{
@@ -270,6 +343,7 @@ class Bullet extends Sprite{
     }
 
     refresh() {
+        this.move()
         this.take_life()
         this.update()
     }
@@ -291,25 +365,21 @@ let layer = new Player({
     height: 207*imagesScale, 
     source: playerSprite
     }, //imgParamaters
+    "Sprites/Player/basic ship2.png", // 2nd img
     {x: 0, y: 0},//pos
-    "idk", //type? idk why I added that
+    "1", //type represents the player's ship (basic actions etc.)
     1.5, //angle
     20, //health
     1.5, //firerate
     10 //speed
 )
 
-function createBullet(Xp, Yp, type, angle, dmg, speed, lifetime) {
-    if (type === "P") {
-        let bul_src = "Sprites/Bullets/costume1.png"
-    } else{
-        let bul_src = null // change to enemy version
-    }
+function createBulletPlayer(Xp, Yp, type, angle, dmg, speed, lifetime) {
 
     let newBullet = new Bullet({
-        width: 313*imagesScale,
-        height: 207*imagesScale,
-        source: bul_src
+        width: 200*imagesScale,
+        height: 75*imagesScale,
+        source: bulletSprite
     },
     {x: Xp, y: Yp},
     type,
@@ -326,10 +396,10 @@ function createBullet(Xp, Yp, type, angle, dmg, speed, lifetime) {
 function updateProjectiles(context) {
     for (let i = projectiles.length - 1; i >= 0; i--) {
         let projectile = projectiles[i];
-        projectile.refresh();
+        projectile.refresh()
 
         // Remove if off-screen
-        if (projectile.x < -100 || projectile.x > context.canvas.width || projectile.y < -100 || projectile.y > context.canvas.height) {
+        if (projectile.x < -100 || projectile.x > context.canvas.width + 100 || projectile.y < -100 || projectile.y > context.canvas.height + 100) {
             projectiles.splice(i, 1);
         }
 
