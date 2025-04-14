@@ -6,6 +6,7 @@ let b_ground;
 let stars1;
 let projectiles = []
 let bGroundObj = []
+let containEnemy = []
 
 // 6.3 === full rotation new Component(..., angle)
 // anim var
@@ -429,7 +430,19 @@ class Enemy extends Sprite {
 
     refresh() {
         this.move_behavior()
+        this.reload()
+        this.type_shoot()
+        this.anim()
         this.update()
+    }
+
+    anim() {
+        if (this.anim_len > 0) {
+            this.current_img = this.imageBonus
+            this.anim_len -= 0.1
+        } else {
+            this.current_img = this.image
+        }
     }
 
     move_behavior() {
@@ -459,7 +472,7 @@ class Enemy extends Sprite {
 
     spawn_bullet() {
         this.anim_len = 0.2
-        createBulletPlayer(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "P", this.angle + (this.ran_bullet_angle(-2, 2))/10, 1, 20, 10)
+        createBulletPlayer(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "E", this.angle + (this.ran_bullet_angle(-2, 2))/10, 1, 20, 10)
         this.cooldown = this.firerate
         this.pos.x -= Math.cos(this.angle) * 5;
         this.pos.y -= Math.sin(this.angle) * 5;
@@ -497,6 +510,25 @@ class Bullet extends Sprite{
         this.pos.y += this.velocityY
     }
     
+}
+
+function createEnemy(Xp, Yp, type, angle, speed, health, firerate, source, secondary) {
+
+    let newEnemy = new Enemy({
+        width: 313*imagesScale,
+        height: 207*imagesScale,
+        source: source
+    }, 
+    secondary,
+    {x: Xp, y: Yp},
+    type, 
+    angle,
+    health,
+    firerate,
+    speed
+    )
+
+    containEnemies.push(newEnemy)
 }
 
 function createBulletPlayer(Xp, Yp, type, angle, dmg, speed, lifetime) {
@@ -579,6 +611,18 @@ function updateProjectiles(context) {
         if (projectile.life < 0.1) {
             console.log("bullet deleted")
             projectiles.splice(i, 1);
+        }
+    }
+}
+
+function updateEnemies(context) {
+    for (let i = containEnemies.length - 1; i >= 0; i--) {
+        let enemy = containEnemies[i];
+        enemy.refresh()
+
+        if (enemy.health < 0.1) {
+            console.log("enemy died")
+            containEnemies.splice(i, 1)
         }
     }
 }
