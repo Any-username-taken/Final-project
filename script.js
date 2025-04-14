@@ -627,11 +627,21 @@ function updateEnemies(context) {
     }
 }
 
+function getBGroundPreset(preset, Y) {
+    if (preset === "small1") {
+        createBackground(1280, Y, 590*1.5, 350*1.5, "none", -0.4, "Backgrounds/Xtra/Planet 1.png")
+    }
+
+    if (preset === "large") {
+        createBackground(1280, 200, 590*2.5, 550*2.5, "none", -0.1, "Backgrounds/Xtra/Planet BIG.png")
+    }
+}
+
 createBulletEnemy(-100, 0, "outside", 0, 0, 0, -1)
 createBulletPlayer(-100, 0, "outside", 0, 0, 0, -1) //Preloads bullet so img doesn't dissappear
 createBackground(0, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
-createBackground(1280, 500, 590*1.5, 350*1.5, "none", -0.8, "Backgrounds/Xtra/Planet 1.png")
+createBackground(1280, 200, 590*2.5, 550*2.5, "none", -0.1, "Backgrounds/Xtra/Planet BIG.png")
 
 let layer = new Player({
     width: 313*imagesScale, 
