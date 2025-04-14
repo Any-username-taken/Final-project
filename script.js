@@ -422,9 +422,50 @@ class Enemy extends Sprite {
         this.imageBonus.src = imgbonus
 
         this.firerate = firerate
+        this.cooldown = this.firerate
 
         this.mSpeed = maxSpeed
-}} 
+}
+
+    refresh() {
+        this.move_behavior()
+        this.update()
+    }
+
+    move_behavior() {
+        if (this.type === "1") {
+            // Enemy Type 1 actions
+        }
+
+        if (this.type === "2") {
+            if (this.pos.x < -100) {
+                this.pos.x = 1280
+            }
+            this.pos.x -= this.mSpeed
+        }
+    }
+
+    reload() {
+        if (this.cooldown > 0.1) {
+            this.cooldown -= 0.1
+        }
+    }
+
+    type_shoot() {
+        if (this.type === "2" && this.cooldown < 0.1) {
+            this.spawn_bullet()
+        }
+    }
+
+    spawn_bullet() {
+        this.anim_len = 0.2
+        createBulletPlayer(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "P", this.angle + (this.ran_bullet_angle(-2, 2))/10, 1, 20, 10)
+        this.cooldown = this.firerate
+        this.pos.x -= Math.cos(this.angle) * 5;
+        this.pos.y -= Math.sin(this.angle) * 5;
+    }
+
+} 
 
 
 class Bullet extends Sprite{
@@ -446,7 +487,9 @@ class Bullet extends Sprite{
     }
 
     take_life() {
-        this.life -= 0.1
+        if (this.type !== "outside") {
+            this.life -= 0.1
+        }
     }
 
     move() {
@@ -474,6 +517,23 @@ function createBulletPlayer(Xp, Yp, type, angle, dmg, speed, lifetime) {
     projectiles.push(newBullet)
 }
 
+function createBulletEnemy(Xp, Yp, type, angle, dmg, speed, lifetime) {
+
+    let newBullet = new Bullet({
+        width: 200*imagesScale,
+        height: 75*imagesScale,
+        source: "Sprites/Bullets/enemyBullet.png"
+    },
+    {x: Xp, y: Yp},
+    type,
+    angle,
+    dmg,
+    speed,
+    lifetime
+    )
+
+    projectiles.push(newBullet)
+}
 
 function createBackground(Xp, Yp, scaleX, scaleY, type, speed, src) {
     let newBground = new Background({
@@ -511,7 +571,7 @@ function updateProjectiles(context) {
         projectile.refresh()
 
         // Remove if off-screen
-        if (projectile.x < -100 || projectile.x > context.canvas.width + 100 || projectile.y < -100 || projectile.y > context.canvas.height + 100) {
+        if (projectile.x < -100 || projectile.x > context.canvas.width + 100 || projectile.y < -100 || projectile.y > context.canvas.height + 100 && projectile.type !== "outside") {
             projectiles.splice(i, 1);
             console.log("bullet deleted")
         }
@@ -523,6 +583,8 @@ function updateProjectiles(context) {
     }
 }
 
+createBulletEnemy(-100, 0, "outside", 0, 0, 0, -1)
+createBulletPlayer(-100, 0, "outside", 0, 0, 0, -1) //Preloads bullet so img doesn't dissappear
 createBackground(0, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 createBackground(1280, 500, 590*1.5, 350*1.5, "none", -0.8, "Backgrounds/Xtra/Planet 1.png")
