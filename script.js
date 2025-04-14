@@ -177,7 +177,7 @@ class Player extends Sprite{
         document.addEventListener("mousemove", (event) => {
             let orig = this.get_dist()
             this.mouseX = event.clientX - orig - 15
-            this.mouseY = event.clientY - 90
+            this.mouseY = event.clientY - 90 * 0.70
         })
 
         document.removeEventListener("mousemove", (event) => {
@@ -512,6 +512,51 @@ class Bullet extends Sprite{
     
 }
 
+class HealthBar{
+    constructor(intiHealth, initMax, X, Y) {
+        this.img = new Image()
+        this.img.src = "Sprites/HealthBar/0.png"
+
+        this.H = intiHealth
+        this.MH = initMax
+
+        this.len = 0
+        this.color = "red"
+
+        this.x = X
+        this.y = Y
+    }
+
+    update() {
+        this.change_color()
+        let ctx = GameArea.context;
+
+        ctx.save();
+
+        //rotate player img
+        ctx.translate(this.x + 100/2, this.y + 10/2);
+
+        //Images anim
+        
+        ctx.drawImage(this.current_img, -100/2, -10/2, 100, 10);
+
+        ctx.restore();
+
+        ctx.rect(this.x + 50, this.y + 5, this.len, 10)
+        ctx.fillStyle(this.color)
+    }
+
+    change_color() {
+        let percentage = (this.H - 0) / (100 - 0);
+        let red = Math.round(percentage * 255);
+        let green = Math.round((1 - percentage) * 255);
+        let blue = 0;
+        this.color = `rgb(${red}, ${green}, ${blue})`;
+    }
+
+    
+}
+
 function createEnemy(Xp, Yp, type, angle, speed, health, firerate, source, secondary) {
 
     let newEnemy = new Enemy({
@@ -632,6 +677,10 @@ function getBGroundPreset(preset, Y) {
         createBackground(1280, Y, 590*1.5, 350*1.5, "none", -0.4, "Backgrounds/Xtra/Planet 1.png")
     }
 
+    if (preset === "small2") {
+        createBackground(1280, Y, 590*1.5, 350*1.5, "none", -0.4, "Backgrounds/Xtra/Planet 2.png")
+    }
+
     if (preset === "large") {
         createBackground(1280, 200, 590*2.5, 550*2.5, "none", -0.1, "Backgrounds/Xtra/Planet BIG.png")
     }
@@ -641,7 +690,8 @@ createBulletEnemy(-100, 0, "outside", 0, 0, 0, -1)
 createBulletPlayer(-100, 0, "outside", 0, 0, 0, -1) //Preloads bullet so img doesn't dissappear
 createBackground(0, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
-createBackground(1280, 200, 590*2.5, 550*2.5, "none", -0.1, "Backgrounds/Xtra/Planet BIG.png")
+getBGroundPreset("small2", 250)
+
 
 let layer = new Player({
     width: 313*imagesScale, 
@@ -657,6 +707,10 @@ let layer = new Player({
     10 //speed
 )
 
+let bar = new HealthBar(
+    50, 50, 100, 100
+)
+
 function updateGameArea() {
     GameArea.clear();
 
@@ -666,4 +720,5 @@ function updateGameArea() {
 
     layer.refresh()
     updateProjectiles(ctx)
+    bar.update()
 }

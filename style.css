@@ -42,3 +42,8 @@ body {
  #Game-Window {
     border:10px solid white;
  }
+
+ html 
+ {
+   zoom: 100%;
+}
