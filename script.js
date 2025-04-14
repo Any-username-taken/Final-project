@@ -5,6 +5,7 @@ let player;
 let b_ground;
 let stars1;
 let projectiles = []
+let bGroundObj = []
 
 // 6.3 === full rotation new Component(..., angle)
 // anim var
@@ -28,7 +29,7 @@ let GameArea = {
         this.interval = setInterval(updateGameArea, 20);
         this.canvas.id = "Game-Window";
         document.body.insertBefore(this.canvas, document.body.childNodes[1]);
-        let element = document.querySelector("div.window");
+        let element = document.querySelector("div.GameWindow");
         element.appendChild(this.canvas);
     },
 
@@ -36,6 +37,7 @@ let GameArea = {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     }
 }
+
 
 //Sprite class
 
@@ -87,6 +89,48 @@ class Sprite{
     }
 }
 
+class Background extends Sprite{
+    constructor(imgPar, imgbonus, pos, type, angle, speed) {
+        super(imgPar, pos, type, angle)
+
+        // type goes as follows - 
+        // none: any type of bGround obj that follows basic rules
+        // stars: stay forever
+        // reverse: follows basic rules except runs opposite direction + kill at x > 1280
+
+        this.imgBonus = new Image()
+        this.imgBonus.src = imgbonus
+
+        this.speed = speed
+
+        this.life = true
+    }
+
+    refresh() {
+        this.change_speed()
+        this.update()
+        this.case_edge()
+    }
+
+    change_speed() {
+        this.pos.x += this.speed
+    }
+
+    case_edge() {
+        if (this.pos.x < -1280 && this.type !== "reverse") {
+            if (this.type === "stars") {
+                this.pos.x = 1280
+            } else {
+                this.life = false
+            }
+        } else {
+            if (this.pos.x > 1280 && this.type === "reverse") {
+                this.life = false
+            }
+        }
+    }
+}
+
 //Player class parent is Sprite
 
 class Player extends Sprite{
@@ -130,6 +174,12 @@ class Player extends Sprite{
 
     get_mouse_pos () {
         document.addEventListener("mousemove", (event) => {
+            let orig = this.get_dist()
+            this.mouseX = event.clientX - orig - 15
+            this.mouseY = event.clientY - 90
+        })
+
+        document.removeEventListener("mousemove", (event) => {
             let orig = this.get_dist()
             this.mouseX = event.clientX - orig - 15
             this.mouseY = event.clientY - 90
@@ -242,7 +292,43 @@ class Player extends Sprite{
             }
         })
 
+        document.removeEventListener("keydown", (event) => {
+            if (event.key === "w") {
+                this.keypress.w = true;
+            }
+
+            if (event.key === "a") {
+                this.keypress.a = true;
+            }
+
+            if (event.key === "s") {
+                this.keypress.s = true;
+            }
+
+            if (event.key === "d") {
+                this.keypress.d = true;
+            }
+        });
+
         document.addEventListener("keyup", (event) => {
+            if (event.key === "w") {
+                this.keypress.w = false;
+            }
+
+            if (event.key === "a") {
+                this.keypress.a = false;
+            }
+
+            if (event.key === "s") {
+                this.keypress.s = false;
+            }
+
+            if (event.key === "d") {
+                this.keypress.d = false;
+            }
+        })
+
+        document.removeEventListener("keyup", (event) => {
             if (event.key === "w") {
                 this.keypress.w = false;
             }
@@ -265,7 +351,6 @@ class Player extends Sprite{
         min = Math.ceil(min);
         max = Math.floor(max);
         let ran = Math.floor(Math.random() * (max - min + 1)) + min;
-        console.log(ran)
         return ran
     }
 
@@ -276,11 +361,23 @@ class Player extends Sprite{
             }
         })
 
+        document.removeEventListener("mousedown", (event) => {
+            if (event.button === 0) {
+                this.mouseD = true
+            }
+        });
+
         document.addEventListener("mouseup", (event) => {
             if (event.button === 0){
                 this.mouseD = false
         }
         })
+
+        document.removeEventListener("mouseup", (event) => {
+            if (event.button === 0){
+                this.mouseD = false
+        }
+        });
     }
 
     actually_fire() {
@@ -359,21 +456,6 @@ class Bullet extends Sprite{
     
 }
 
-
-let layer = new Player({
-    width: 313*imagesScale, 
-    height: 207*imagesScale, 
-    source: playerSprite
-    }, //imgParamaters
-    "Sprites/Player/basic ship2.png", // 2nd img
-    {x: 0, y: 0},//pos
-    "1", //type represents the player's ship (basic actions etc.)
-    1.5, //angle
-    20, //health
-    1.5, //firerate
-    10 //speed
-)
-
 function createBulletPlayer(Xp, Yp, type, angle, dmg, speed, lifetime) {
 
     let newBullet = new Bullet({
@@ -393,6 +475,36 @@ function createBulletPlayer(Xp, Yp, type, angle, dmg, speed, lifetime) {
 }
 
 
+function createBackground(Xp, Yp, scaleX, scaleY, type, speed, src) {
+    let newBground = new Background({
+        width: scaleX,
+        height: scaleY,
+        source: src
+    }, 
+    src,
+    {x: Xp, y: Yp},
+    type,
+    0,
+    speed
+    )
+
+    bGroundObj.unshift(newBground)
+}
+
+function updateBGround(contex) {
+    for (let i = bGroundObj.length - 1; i >= 0; i --) {
+        let current = bGroundObj[i];
+        current.refresh()
+
+        if (current.life) {
+            let pass = {}
+        } else {
+            console.log("background item deleted")
+            bGroundObj.splice(i, 1)
+        }
+    }
+}
+
 function updateProjectiles(context) {
     for (let i = projectiles.length - 1; i >= 0; i--) {
         let projectile = projectiles[i];
@@ -401,19 +513,40 @@ function updateProjectiles(context) {
         // Remove if off-screen
         if (projectile.x < -100 || projectile.x > context.canvas.width + 100 || projectile.y < -100 || projectile.y > context.canvas.height + 100) {
             projectiles.splice(i, 1);
+            console.log("bullet deleted")
         }
 
         if (projectile.life < 0.1) {
+            console.log("bullet deleted")
             projectiles.splice(i, 1);
         }
     }
 }
 
+createBackground(0, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
+createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
+createBackground(1280, 500, 590*1.5, 350*1.5, "none", -0.8, "Backgrounds/Xtra/Planet 1.png")
+
+let layer = new Player({
+    width: 313*imagesScale, 
+    height: 207*imagesScale, 
+    source: playerSprite
+    }, //imgParamaters
+    "Sprites/Player/basic ship2.png", // 2nd img
+    {x: 0, y: 0},//pos
+    "1", //type represents the player's ship (basic actions etc.)
+    1.5, //angle
+    20, //health
+    1.5, //firerate
+    10 //speed
+)
 
 function updateGameArea() {
     GameArea.clear();
 
     let ctx = GameArea.context;
+
+    updateBGround(ctx)
 
     layer.refresh()
     updateProjectiles(ctx)
