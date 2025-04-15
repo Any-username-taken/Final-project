@@ -1,0 +1,31 @@
+Explination:
+
+Enemy Type is the type of enemy (enemy 1, enemy 2, etc) which it will pull presets from.
+Meaning that the Preset can be the same value but still produce a different result. Only
+accepts int()
+
+Preset is the formation the Enemy Type will spawn in. That's it.
+
+Seconds until next will go down by 0.1 each frame. When it reaches 0, it starts next wave.
+Set to very high number to only use Enemies left
+
+Enemies Left starts next wave when enemy count reaches or goes below it's value, regardless of
+value in seconds until next (unless it has already reached 0). Set to negative to disable.
+
+continue/wait stage end/shop
+Continue goes to the next wave once either Seconds until next reaches 0 or enemies left is ===
+or greater than actual number of enemies left.
+
+Wait stage end waits until all enemies have been killed, and adds delay between next wave.
+Planning on adding a level complete screen like in the scratch project. Might just make it 
+frame by frame too.
+
+Shop is one I don't know if I am actually going to add or not. Just pauses other gameplay until
+shop is closed.
+
+Remember to delete first | split and delete first \n split (idk what it is in javascript)
+
+File reading goes as follows:
+
+Enemy Type - Preset - seconds until next - enemies left - continue/wait stage end/shop 
+|

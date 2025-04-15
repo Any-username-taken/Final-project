@@ -7,6 +7,7 @@ let stars1;
 let projectiles = []
 let bGroundObj = []
 let containEnemy = []
+let spawn = []
 
 // 6.3 === full rotation new Component(..., angle)
 // 3.25 === Half rotation
@@ -439,6 +440,11 @@ class Enemy extends Sprite {
         this.cooldown = this.firerate
 
         this.mSpeed = maxSpeed
+
+        this.turn = false
+
+        this.brightness = 100
+        this.decreaseBright = true
 }
 
     refresh() {
@@ -447,7 +453,21 @@ class Enemy extends Sprite {
         this.reload()
         this.type_shoot()
         this.anim()
+        this.brightness_anim()
         this.update()
+    }
+
+    brightness_anim() {
+        let ctx = GameArea.context
+
+        ctx.filter = `brightness(${this.brightness}%)`
+        if (this.decreaseBright && this.brightness > 100) {
+            this.brightness -= 1
+        } else if(this.decreaseBright = false && this.brightness < 200) {
+            this.brightness += 1
+        } else {
+            this.decreaseBright = true
+        }
     }
 
     anim() {
@@ -461,7 +481,7 @@ class Enemy extends Sprite {
 
     move_behavior() {
         if (this.type === "1") {
-            // Enemy Type 1 actions
+            this.turn = true
         }
 
         if (this.type === "2") {
@@ -504,6 +524,24 @@ class Enemy extends Sprite {
         this.Hp_bar.x = this.pos.x
         this.Hp_bar.y = this.pos.y - 30
         this.Hp_bar.update()
+    }
+
+    rotate() {
+        if (this.turn){
+            let dy = layer.pos.y - this.pos.y;
+            let dx = layer.pos.x - this.pos.x;
+
+            this.angle = Math.atan2(dy, dx);
+        }
+    }
+
+    hit(damage) {
+        if ((this.H - damage) < 0.1) {
+            this.H = 0
+        } else {
+            this.decreaseBright = false
+            this.H -= damage
+        }
     }
 
 } 
@@ -687,6 +725,16 @@ function updateProjectiles(context) {
             console.log("bullet deleted")
             projectiles.splice(i, 1);
         }
+
+        if (projectile.type === "P") {
+            for (let n = containEnemy.length - 1; n >= 0; n--) {
+                let target = containEnemy[i]
+                if (checkCollision(projectile, target)) {
+                    target.hit(projectile.damage)
+                    projectiles.splice(i, 1);
+                }
+            }
+        }
     }
 }
 
@@ -697,7 +745,7 @@ function updateEnemies(context) {
 
         if (enemy.health < 0.1) {
             console.log("enemy died")
-            containEnemies.splice(i, 1)
+            containEnemy.splice(i, 1)
         }
     }
 }
@@ -716,13 +764,65 @@ function getBGroundPreset(preset, Y) {
     }
 }
 
+function checkCollision(projectile, target) {
+    console.log(projectile.pos, target.pos)
+    if (
+      projectile.pos.x < target.pos.x + target.imgPar.width &&
+      projectile.pos.x + projectile.imgPar.width > target.pos.x &&
+      projectile.pos.y < target.pos.y + target.imgPar.height &&
+      projectile.pos.y + projectile.imgPar.height > target.pos.y
+    ) {
+        return true
+    } else{
+        return false
+    }
+  }
+
+function spawn_controller() { //USE THIS ONE IN MAIN LOOP
+
+}
+
+function spawn_queue() {
+    if (spawn.length) {
+        if (spawn[0][1] < 0.1) {
+            createEnemy(spawn[0][0][0], spawn[0][0][1], spawn[0][0][2], spawn[0][0][3],spawn[0][0][4], spawn[0][0][5], spawn[0][0][6], spawn[0][0][7], spawn[0][0][8], spawn[0][0][9], spawn[0][0][10])
+            spawn.shift()
+        } else {
+            spawn[0][1] -= 0.1
+        }
+        }
+}
+
+function enemyPresets(type, num) {
+    // type is the enemy type, and num is the number of preset for that enemy type. This is a replica of a system that I made in scratch.
+
+    if (type === "1") {
+        //Enemy 1 presets go here
+    } else if(type === "2") {
+        if (num === "1") {
+            spawn.push([[1280, 355, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400], 0])
+            spawn.push([[1280, 255, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400], 3.5])
+            spawn.push([[1280, 455, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400], 0])
+        } else if (num === "2") {
+            spawn.push([[1280, 50, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400], 0])
+            spawn.push([[1280, 645, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400], 0])
+        } else if (num === "3") {
+            spawn.push([[1280, 150, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400], 0])
+            spawn.push([[1280, 545, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400], 0])
+            spawn.push([[1280, 250, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400], 3.5])
+            spawn.push([[1280, 445, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400], 0])
+        }
+    }
+}
+
 createBulletEnemy(-100, 0, "outside", 0, 0, 0, 1)
 createBulletPlayer(-100, 0, "outside", 0, 0, 0, 1) //Preloads bullet so img doesn't dissappear
 createBackground(0, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 //getBGroundPreset("large", 250)
-createEnemy(1280, 355, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400)
+//createEnemy(1280, 355, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400)
 
+enemyPresets("2", "3")
 
 let layer = new Player({
     width: 313*imagesScale, 
@@ -742,6 +842,8 @@ function updateGameArea() {
     GameArea.clear();
 
     let ctx = GameArea.context;
+
+    spawn_queue()
 
     updateBGround(ctx)
     updateEnemies(ctx)
