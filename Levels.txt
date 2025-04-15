@@ -23,9 +23,17 @@ frame by frame too.
 Shop is one I don't know if I am actually going to add or not. Just pauses other gameplay until
 shop is closed.
 
+finished spawn? is just a boolean to check if the enemies were already spawned. True if yes, False
+if no.
+
 Remember to delete first | split and delete first \n split (idk what it is in javascript)
 
 File reading goes as follows:
 
-Enemy Type - Preset - seconds until next - enemies left - continue/wait stage end/shop 
+Enemy Type - Preset - seconds until next - enemies left - continue/wait stage end/shop - finished spawn?
 |
+2~1~5.5~0~Continue~false~Spawn E 2 set 1 continue to next wave after 5.5s or 0 enemies left
+2~2~0~0~Stop~false~Spawn E 2 set 1 Stop until 0 enemies left
+2~1~8~3~Continue~false~Spawn E 2 set 1 continue after 8s or until 3 enemies left
+2~1~999~2~Continue~false~Spawn E 2 set 1 continue after 999s or until 2 enemies left
+2~2~0~0~Stop~false~Spawn E 2 set 2 Stop until 0 enemeis left
