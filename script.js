@@ -137,7 +137,7 @@ class Background extends Sprite{
 //Player class parent is Sprite
 
 class Player extends Sprite{
-    constructor(imgPar, imgbonus, pos, type, angle, health, firerate, maxSpeed) {
+    constructor(imgPar, imgbonus, pos, type, angle, health, firerate, maxSpeed, damage=1) {
         super(imgPar, pos, type, angle, health)
 
         this.Hp_bar = new HealthBar(this.health, this.health, this.pos.x + this.imgPar.width/2, -10)
@@ -155,6 +155,8 @@ class Player extends Sprite{
         this.mouseY = 0
 
         this.mouseD = false
+
+        this.damage = damage
     }
 
     refresh() {
@@ -392,7 +394,7 @@ class Player extends Sprite{
                 this.firerate -= 0.1
             }
             this.anim_len = 0.2
-            createBulletPlayer(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "P", this.angle + (this.ran_bullet_angle(-2, 2))/10, 1, 20, 10)
+            createBulletPlayer(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "P", this.angle + (this.ran_bullet_angle(-2, 2))/10, this.damage, 20, 10)
             this.cooldown = this.firerate
             this.pos.x -= Math.cos(this.angle) * 5;
             this.pos.y -= Math.sin(this.angle) * 5;
@@ -428,7 +430,7 @@ class Player extends Sprite{
 
 
 class Enemy extends Sprite {
-    constructor(imgPar, imgbonus, pos, type, angle, health, firerate, maxSpeed) {
+    constructor(imgPar, imgbonus, pos, type, angle, health, firerate, maxSpeed, damage=2) {
         super(imgPar, pos, type, angle, health)
 
         this.Hp_bar = new HealthBar(this.health, this.health, this.pos.x + this.imgPar.width/2, -10)
@@ -445,6 +447,8 @@ class Enemy extends Sprite {
 
         this.brightness = 100
         this.decreaseBright = true
+
+        this.damage = damage
 }
 
     refresh() {
@@ -506,7 +510,7 @@ class Enemy extends Sprite {
 
     spawn_bullet() {
         this.anim_len = 0.2
-        createBulletEnemy(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "E", this.angle + (this.ran_bullet_angle(-10, 10))/100, 1, 20, 10)
+        createBulletEnemy(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "E", this.angle + (this.ran_bullet_angle(-10, 10))/100, this.damage, 20, 10)
         this.cooldown = this.firerate
         this.pos.x -= Math.cos(this.angle) * 5;
         this.pos.y -= Math.sin(this.angle) * 5;
@@ -537,10 +541,10 @@ class Enemy extends Sprite {
 
     hit(damage) {
         if ((this.H - damage) < 0.1) {
-            this.H = 0
+            this.health = 0
         } else {
             this.decreaseBright = false
-            this.H -= damage
+            this.health -= damage
         }
     }
 
@@ -562,6 +566,7 @@ class Bullet extends Sprite{
     refresh() {
         this.move()
         this.take_life()
+        this.check_colide()
         this.update()
     }
 
@@ -574,6 +579,21 @@ class Bullet extends Sprite{
     move() {
         this.pos.x += this.velocityX
         this.pos.y += this.velocityY
+    }
+
+    check_colide() {
+        if (this.type === "P") {
+        for (let i = containEnemy.length - 1; i >= 0; i--) {
+            let target = containEnemy[i]
+
+            if (this.pos.x < target.pos.x + target.imgPar.width &&
+                this.pos.x + this.imgPar.width > target.pos.x &&
+                this.pos.y < target.pos.y + target.imgPar.height &&
+                this.pos.y + this.imgPar.height > target.pos.y) {
+                    target.hit(this.dmg)
+                    this.life = 0
+                }
+        }}
     }
     
 }
@@ -726,15 +746,6 @@ function updateProjectiles(context) {
             projectiles.splice(i, 1);
         }
 
-        if (projectile.type === "P") {
-            for (let n = containEnemy.length - 1; n >= 0; n--) {
-                let target = containEnemy[i]
-                if (checkCollision(projectile, target)) {
-                    target.hit(projectile.damage)
-                    projectiles.splice(i, 1);
-                }
-            }
-        }
     }
 }
 
@@ -765,17 +776,12 @@ function getBGroundPreset(preset, Y) {
 }
 
 function checkCollision(projectile, target) {
-    console.log(projectile.pos, target.pos)
-    if (
+    return (
       projectile.pos.x < target.pos.x + target.imgPar.width &&
       projectile.pos.x + projectile.imgPar.width > target.pos.x &&
       projectile.pos.y < target.pos.y + target.imgPar.height &&
       projectile.pos.y + projectile.imgPar.height > target.pos.y
-    ) {
-        return true
-    } else{
-        return false
-    }
+    )
   }
 
 function spawn_controller() { //USE THIS ONE IN MAIN LOOP
@@ -835,7 +841,8 @@ let layer = new Player({
     1.5, //angle
     20, //health
     1.5, //firerate
-    10 //speed
+    10, //speed
+    0.5 //damage
 )
 
 function updateGameArea() {
