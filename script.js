@@ -426,6 +426,14 @@ class Player extends Sprite{
         this.Hp_bar.y = this.pos.y - 30
         this.Hp_bar.update()
     }
+
+    hit(damage) {
+        if (this.health - damage < 0.1) {
+            this.health = 0
+        } else {
+            this.health -= damage
+        }
+    }
 }
 
 
@@ -593,10 +601,17 @@ class Bullet extends Sprite{
                     target.hit(this.dmg)
                     this.life = 0
                 }
-        }}
-    }
+        }} else if (this.type === "E") {
+                let target = layer
     
-}
+                if (this.pos.x < target.pos.x + target.imgPar.width &&
+                    this.pos.x + this.imgPar.width > target.pos.x &&
+                    this.pos.y < target.pos.y + target.imgPar.height &&
+                    this.pos.y + this.imgPar.height > target.pos.y) {
+                        target.hit(this.dmg)
+                        this.life = 0}
+    
+}}}
 
 class HealthBar{
     constructor(intiHealth, initMax, X, Y) {
