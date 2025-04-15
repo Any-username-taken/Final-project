@@ -9,6 +9,7 @@ let bGroundObj = []
 let containEnemy = []
 
 // 6.3 === full rotation new Component(..., angle)
+// 3.25 === Half rotation
 // anim var
 let playerSprite = "Sprites/Player/basic ship.png";
 let bulletSprite = "Sprites/Bullets/costume1.png";
@@ -138,6 +139,8 @@ class Player extends Sprite{
     constructor(imgPar, imgbonus, pos, type, angle, health, firerate, maxSpeed) {
         super(imgPar, pos, type, angle, health)
 
+        this.Hp_bar = new HealthBar(this.health, this.health, this.pos.x + this.imgPar.width/2, -10)
+
         this.imageDouble = new Image()
         this.imageDouble.src = imgbonus
 
@@ -162,6 +165,7 @@ class Player extends Sprite{
         this.get_keydowns()
         this.get_angle()
         this.get_translate()
+        this.update_health()
         super.update()
     }
 
@@ -412,12 +416,21 @@ class Player extends Sprite{
             this.firerate += 0.1
         }
     }
+
+    update_health() {
+        this.Hp_bar.H = this.health
+        this.Hp_bar.x = this.pos.x - this.imgPar.width
+        this.Hp_bar.y = this.pos.y - 30
+        this.Hp_bar.update()
+    }
 }
 
 
 class Enemy extends Sprite {
     constructor(imgPar, imgbonus, pos, type, angle, health, firerate, maxSpeed) {
         super(imgPar, pos, type, angle, health)
+
+        this.Hp_bar = new HealthBar(this.health, this.health, this.pos.x + this.imgPar.width/2, -10)
 
         this.imageBonus = new Image()
         this.imageBonus.src = imgbonus
@@ -429,6 +442,7 @@ class Enemy extends Sprite {
 }
 
     refresh() {
+        this.update_health()
         this.move_behavior()
         this.reload()
         this.type_shoot()
@@ -472,10 +486,24 @@ class Enemy extends Sprite {
 
     spawn_bullet() {
         this.anim_len = 0.2
-        createBulletPlayer(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "E", this.angle + (this.ran_bullet_angle(-2, 2))/10, 1, 20, 10)
+        createBulletEnemy(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "E", this.angle + (this.ran_bullet_angle(-10, 10))/100, 1, 20, 10)
         this.cooldown = this.firerate
         this.pos.x -= Math.cos(this.angle) * 5;
         this.pos.y -= Math.sin(this.angle) * 5;
+    }
+
+    ran_bullet_angle(min, max) {
+        min = Math.ceil(min);
+        max = Math.floor(max);
+        let ran = Math.floor(Math.random() * (max - min + 1)) + min;
+        return ran
+    }
+
+    update_health() {
+        this.Hp_bar.H = this.health
+        this.Hp_bar.x = this.pos.x
+        this.Hp_bar.y = this.pos.y - 30
+        this.Hp_bar.update()
     }
 
 } 
@@ -528,6 +556,8 @@ class HealthBar{
     }
 
     update() {
+        this.len = (this.H / this.MH) * 100
+
         this.change_color()
         let ctx = GameArea.context;
 
@@ -538,18 +568,18 @@ class HealthBar{
 
         //Images anim
         
-        ctx.drawImage(this.current_img, -100/2, -10/2, 100, 10);
+        ctx.drawImage(this.img, -100/2, -10/2, 100, 10);
 
         ctx.restore();
 
-        ctx.rect(this.x + 50, this.y + 5, this.len, 10)
-        ctx.fillStyle(this.color)
+        ctx.fillStyle = this.color
+        ctx.fillRect(this.x, this.y, this.len, 10);
     }
 
     change_color() {
-        let percentage = (this.H - 0) / (100 - 0);
-        let red = Math.round(percentage * 255);
-        let green = Math.round((1 - percentage) * 255);
+        let percentage = (this.H - 0) / (this.MH - 0);
+        let green = Math.round(percentage * 255);
+        let red = Math.round((1 - percentage) * 255);
         let blue = 0;
         this.color = `rgb(${red}, ${green}, ${blue})`;
     }
@@ -557,11 +587,11 @@ class HealthBar{
     
 }
 
-function createEnemy(Xp, Yp, type, angle, speed, health, firerate, source, secondary) {
+function createEnemy(Xp, Yp, type, angle, speed, health, firerate, source, secondary, w, h) {
 
     let newEnemy = new Enemy({
-        width: 313*imagesScale,
-        height: 207*imagesScale,
+        width: w*imagesScale,
+        height: h*imagesScale,
         source: source
     }, 
     secondary,
@@ -573,7 +603,7 @@ function createEnemy(Xp, Yp, type, angle, speed, health, firerate, source, secon
     speed
     )
 
-    containEnemies.push(newEnemy)
+    containEnemy.push(newEnemy)
 }
 
 function createBulletPlayer(Xp, Yp, type, angle, dmg, speed, lifetime) {
@@ -661,8 +691,8 @@ function updateProjectiles(context) {
 }
 
 function updateEnemies(context) {
-    for (let i = containEnemies.length - 1; i >= 0; i--) {
-        let enemy = containEnemies[i];
+    for (let i = containEnemy.length - 1; i >= 0; i--) {
+        let enemy = containEnemy[i];
         enemy.refresh()
 
         if (enemy.health < 0.1) {
@@ -686,11 +716,12 @@ function getBGroundPreset(preset, Y) {
     }
 }
 
-createBulletEnemy(-100, 0, "outside", 0, 0, 0, -1)
-createBulletPlayer(-100, 0, "outside", 0, 0, 0, -1) //Preloads bullet so img doesn't dissappear
+createBulletEnemy(-100, 0, "outside", 0, 0, 0, 1)
+createBulletPlayer(-100, 0, "outside", 0, 0, 0, 1) //Preloads bullet so img doesn't dissappear
 createBackground(0, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
-getBGroundPreset("small2", 250)
+//getBGroundPreset("large", 250)
+createEnemy(1280, 355, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400)
 
 
 let layer = new Player({
@@ -707,18 +738,14 @@ let layer = new Player({
     10 //speed
 )
 
-let bar = new HealthBar(
-    50, 50, 100, 100
-)
-
 function updateGameArea() {
     GameArea.clear();
 
     let ctx = GameArea.context;
 
     updateBGround(ctx)
+    updateEnemies(ctx)
 
     layer.refresh()
     updateProjectiles(ctx)
-    bar.update()
 }
