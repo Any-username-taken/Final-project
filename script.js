@@ -8,6 +8,7 @@ let projectiles = []
 let bGroundObj = []
 let containEnemy = []
 let spawn = []
+let deaths = []
 
 // 6.3 === full rotation new Component(..., angle)
 // 3.25 === Half rotation
@@ -660,6 +661,46 @@ class HealthBar{
     
 }
 
+class Death{
+    constructor(x, y, type, imgPar) {
+        this.x = x
+        this.y = y
+
+        this.type = type
+
+        this.image = new Image()
+        this.image.src = imgPar.src
+
+        this.imgPar = imgPar
+
+        this.opacity = 1.0
+    }
+
+    update() {
+        this.change_opacity()
+
+        ctx = GameArea.context;
+
+        ctx.save();
+
+        ctx.globalAlpha = this.opacity;
+
+        ctx.drawImage(this.image, -this.imgPar.width/2, -this.imgPar.height/2, this.imgPar.width, this.imgPar.height);
+
+        ctx.globalAlpha = 1;
+
+        ctx.restore()
+
+        
+    }
+
+    change_opacity() {
+        if (this.opacity > 0.05) {
+            this.opacity -= 0.05
+        }
+    }
+}
+
 function createEnemy(Xp, Yp, type, angle, speed, health, firerate, source, secondary, w, h) {
 
     let newEnemy = new Enemy({
@@ -731,6 +772,27 @@ function createBackground(Xp, Yp, scaleX, scaleY, type, speed, src) {
     bGroundObj.unshift(newBground)
 }
 
+function deathExpl(Xp, Yp, type) {
+    let newExpl = new Death(Xp, Yp, type, {
+        width: 360,
+        height: 360,
+        src: "/workspaces/Final-project/Sprites/DeathSplosions/EXPLOSION small.png"
+    })
+
+    deaths.push(newExpl)
+}
+
+function updateDeaths(context) {
+    for (let i = deaths.length - 1; i >= 0; i--) {
+        let current = deaths[i];
+        current.update()
+
+        if (current.opacity < 0.1) {
+            deaths.splice(i, 1)
+        }
+    }
+}
+
 function updateBGround(contex) {
     for (let i = bGroundObj.length - 1; i >= 0; i --) {
         let current = bGroundObj[i];
@@ -770,6 +832,7 @@ function updateEnemies(context) {
         enemy.refresh()
 
         if (enemy.health < 0.1) {
+            deathExpl(enemy.pos.x, enemy.pos.y, "small")
             console.log("enemy died")
             containEnemy.splice(i, 1)
         }
@@ -868,6 +931,7 @@ function updateGameArea() {
     spawn_queue()
 
     updateBGround(ctx)
+    updateDeaths(ctx)
     updateEnemies(ctx)
 
     layer.refresh()
