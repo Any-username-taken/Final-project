@@ -458,9 +458,12 @@ class Enemy extends Sprite {
         this.decreaseBright = true
 
         this.damage = damage
+
+        this.isDead = false
 }
 
     refresh() {
+        this.checkDeath()
         this.update_health()
         this.move_behavior()
         this.reload()
@@ -554,6 +557,13 @@ class Enemy extends Sprite {
         } else {
             this.decreaseBright = false
             this.health -= damage
+        }
+    }
+
+    checkDeath() {
+        if (this.health < 0.1) {
+            deathExpl(this.pos.x, this.pos.y, "small")
+            this.isDead = true
         }
     }
 
@@ -662,32 +672,35 @@ class HealthBar{
 }
 
 class Death{
-    constructor(x, y, type, imgPar) {
+    constructor(x, y, type, imgPar, source) {
         this.x = x
         this.y = y
 
         this.type = type
 
         this.image = new Image()
-        this.image.src = imgPar.src
+        console.log(source)
+        this.image.src = source
 
         this.imgPar = imgPar
 
-        this.opacity = 1.0
+        this.opacity = 1
     }
 
     update() {
         this.change_opacity()
 
-        ctx = GameArea.context;
+        let ctx = GameArea.context;
 
         ctx.save();
 
         ctx.globalAlpha = this.opacity;
+        
+        ctx.translate(this.x + this.imgPar.width/2 - 30, this.y);
 
         ctx.drawImage(this.image, -this.imgPar.width/2, -this.imgPar.height/2, this.imgPar.width, this.imgPar.height);
 
-        ctx.globalAlpha = 1;
+        ctx.globalAlpha = 1.0;
 
         ctx.restore()
 
@@ -695,8 +708,8 @@ class Death{
     }
 
     change_opacity() {
-        if (this.opacity > 0.05) {
-            this.opacity -= 0.05
+        if (this.opacity > 0.1 && this.type !== "test") {
+            this.opacity -= 0.1
         }
     }
 }
@@ -775,9 +788,8 @@ function createBackground(Xp, Yp, scaleX, scaleY, type, speed, src) {
 function deathExpl(Xp, Yp, type) {
     let newExpl = new Death(Xp, Yp, type, {
         width: 360,
-        height: 360,
-        src: "/workspaces/Final-project/Sprites/DeathSplosions/EXPLOSION small.png"
-    })
+        height: 230,
+    }, "Sprites/DeathSplosions/explosion1.png")
 
     deaths.push(newExpl)
 }
@@ -787,7 +799,7 @@ function updateDeaths(context) {
         let current = deaths[i];
         current.update()
 
-        if (current.opacity < 0.1) {
+        if (current.opacity < 0.1 && current.type !== "test") {
             deaths.splice(i, 1)
         }
     }
@@ -831,8 +843,7 @@ function updateEnemies(context) {
         let enemy = containEnemy[i];
         enemy.refresh()
 
-        if (enemy.health < 0.1) {
-            deathExpl(enemy.pos.x, enemy.pos.y, "small")
+        if (enemy.isDead) {
             console.log("enemy died")
             containEnemy.splice(i, 1)
         }
@@ -901,6 +912,7 @@ function enemyPresets(type, num) {
 
 createBulletEnemy(-100, 0, "outside", 0, 0, 0, 1)
 createBulletPlayer(-100, 0, "outside", 0, 0, 0, 1) //Preloads bullet so img doesn't dissappear
+deathExpl(-100, -100, "test")
 createBackground(0, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 //getBGroundPreset("large", 250)
