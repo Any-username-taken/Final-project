@@ -4,6 +4,7 @@
 let player;
 let b_ground;
 let stars1;
+let mainMusic = new Audio("Audio/0416.MP3")
 let projectiles = []
 let bGroundObj = []
 let containEnemy = []
@@ -145,6 +146,8 @@ class Player extends Sprite{
 
         this.imageDouble = new Image()
         this.imageDouble.src = imgbonus
+
+        this.bulletSound = new Audio("Audio/soundEffects/Pew.mp3")
 
         this.anim_len = 0
 
@@ -394,6 +397,7 @@ class Player extends Sprite{
             if (this.type === "1" && this.firerate > 0.9) {
                 this.firerate -= 0.1
             }
+            this.playSound()
             this.anim_len = 0.2
             createBulletPlayer(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "P", this.angle + (this.ran_bullet_angle(-2, 2))/10, this.damage, 20, 10)
             this.cooldown = this.firerate
@@ -433,6 +437,31 @@ class Player extends Sprite{
             this.health = 0
         } else {
             this.health -= damage
+        }
+    }
+
+    playSound() {
+        let variable = this.ran_bullet_angle(1, 3)
+
+        if (variable === 1) {
+            this.stopSound()
+            this.bulletSound = new Audio("Audio/soundEffects/Pew.mp3")
+            this.bulletSound.play()
+        } else if (variable === 2) {
+            this.stopSound()
+            this.bulletSound = new Audio("Audio/soundEffects/Pew2.mp3")
+            this.bulletSound.play()
+        } else {
+            this.stopSound()
+            this.bulletSound = new Audio("Audio/soundEffects/Pew3.mp3")
+            this.bulletSound.play()
+        }
+    }
+
+    stopSound() {
+        if (this.bulletSound) {
+            this.bulletSound.pause()
+            this.bulletSound.currentTime = 0
         }
     }
 }
@@ -920,6 +949,7 @@ createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bgroun
 
 enemyPresets("2", "3")
 
+
 let layer = new Player({
     width: 313*imagesScale, 
     height: 207*imagesScale, 
@@ -934,6 +964,8 @@ let layer = new Player({
     10, //speed
     0.5 //damage
 )
+
+mainMusic.play()
 
 function updateGameArea() {
     GameArea.clear();
