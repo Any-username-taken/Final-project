@@ -22,6 +22,8 @@ function useFileData(data) {
 //variables
 let player;
 let b_ground;
+let paused = true
+let press_again = true
 let stars1;
 let mainMusic = new Audio("Audio/Music/0416.MP3")
 let projectiles = []
@@ -32,7 +34,8 @@ let deaths = []
 let start_game = false
 let level = 0
 let lel_spawn = ''
-let wait = 0
+let wait = 2
+let levelEnd = false
 
 // 6.3 === full rotation new Component(..., angle)
 // 3.25 === Half rotation
@@ -524,6 +527,8 @@ class Enemy extends Sprite {
         this.damage = damage
 
         this.isDead = false
+
+        this.enter = false
 }
 
     refresh() {
@@ -561,7 +566,11 @@ class Enemy extends Sprite {
 
     move_behavior() {
         if (this.type === "1") {
-            this.turn = true
+            if (this.enter === 1) {
+                if (this.pos.x <= 1280/2) {
+                    
+                }
+            }
         }
 
         if (this.type === "2") {
@@ -579,7 +588,7 @@ class Enemy extends Sprite {
     }
 
     type_shoot() {
-        if (this.type === "2" || this.type === "1" && this.cooldown < 0.1) {
+        if (this.type === "2" && this.cooldown < 0.1) {
             this.spawn_bullet()
         }
     }
@@ -838,6 +847,23 @@ class StartScreen {
     }
 }
 
+function preloadImg(source) {
+    let newBullet = new Bullet({
+        width: 100,
+        height: 100,
+        source: source
+    },
+    {x: -100, y: -100},
+    "outside",
+    0,
+    0,
+    0,
+    1
+
+)
+    projectiles.push(newBullet)
+}
+
 function createEnemy(Xp, Yp, type, angle, speed, health, firerate, source, secondary, w, h) {
 
     let newEnemy = new Enemy({
@@ -927,6 +953,7 @@ function updateStart() {
         } else {
             mainMusic.play()
             layer.can_control = true
+            start_game = true
             start = null
         }
     } else {
@@ -980,11 +1007,9 @@ function updateProjectiles(context) {
         // Remove if off-screen
         if (projectile.x < -100 || projectile.x > context.canvas.width + 100 || projectile.y < -100 || projectile.y > context.canvas.height + 100 && projectile.type !== "outside") {
             projectiles.splice(i, 1);
-            console.log("bullet deleted")
         }
 
         if (projectile.life < 0.1) {
-            console.log("bullet deleted")
             projectiles.splice(i, 1);
         }
 
@@ -1037,53 +1062,71 @@ function spawn_controller() { //USE THIS ONE IN MAIN LOOP
                     if (lel_spawn[3] < 0) {
                         if (lel_spawn[2] < 0.1) {
                             level += 1
+                            console.log("wave ended")
                             lel_spawn = null
                         } else {
-                            lel_spawn[2] -= 0.1
+                            lel_spawn[2] -= 0.01
                         }
                     } else {
                         if (containEnemy.length <= lel_spawn[3] || lel_spawn[2] < 0.1) {
                             level += 1
+                            console.log("wave ended")
                             lel_spawn = null
                         } else {
-                            lel_spawn[2] -= 0.1
+                            lel_spawn[2] -= 0.01
                         }
                     }
                 } else {
                     if (lel_spawn[3] < 0) {
                         if (lel_spawn[2] < 0.1) {
                             level += 1
+                            console.log("level ended")
+                            levelEnd = true
                             lel_spawn = null
-                            wait = 10
+                            wait = 3
                         } else {
-                            lel_spawn[2] -= 0.1
+                            lel_spawn[2] -= 0.01
                         }
                     } else {
                         if (containEnemy.length <= lel_spawn[3] || lel_spawn[2] < 0.1) {
                             level += 1
+                            console.log("level ended")
+                            levelEnd = true
                             lel_spawn = null
-                            wait = 10
+                            wait = 3
                         } else {
-                            lel_spawn[2] -= 0.1
+                            lel_spawn[2] -= 0.01
                         }
                     }
                 }
             }
-        } else if (wait < 0.1 && level < fileData.length) {
-            console.log(fileData)
-            lel_spawn = fileData[level].split("~")
-            console.log(lel_spawn)
-            lel_spawn[2] = parseInt(lel_spawn[2])
-            lel_spawn[3] = parseInt(lel_spawn[3])
+        } else if (wait < 0.1) {
+            if (level < fileData.length && levelEnd && containEnemy.length === 0){
+                console.log("new level")
+                lel_spawn = fileData[level].split("~")
+                console.log(lel_spawn)
+                lel_spawn[2] = parseInt(lel_spawn[2])
+                lel_spawn[3] = parseInt(lel_spawn[3])
+                levelEnd = false
+            } else if (level < fileData.length && levelEnd === false) {
+                console.log("new wave")
+                lel_spawn = fileData[level].split("~")
+                console.log(lel_spawn)
+                lel_spawn[2] = parseInt(lel_spawn[2])
+                lel_spawn[3] = parseInt(lel_spawn[3])
+            }
         } else {
-            wait -= 0.1
+            if (levelEnd && containEnemy.length === 0) {
+            wait -= 0.01
+            } else if (levelEnd === false) {
+                wait -= 0.01
+            }
         }
     }
 }
 
 function spawn_queue() {
     if (spawn.length) {
-        console.log(spawn)
         if (spawn[0][1] < 0.1) {
             createEnemy(spawn[0][0][0], spawn[0][0][1], spawn[0][0][2], spawn[0][0][3],spawn[0][0][4], spawn[0][0][5], spawn[0][0][6], spawn[0][0][7], spawn[0][0][8], spawn[0][0][9], spawn[0][0][10])
             spawn.shift()
@@ -1095,7 +1138,6 @@ function spawn_queue() {
 
 function enemyPresets(type, num) {
     // type is the enemy type, and num is the number of preset for that enemy type. This is a replica of a system that I made in scratch.
-    console.log(spawn)
     if (type === "1") {
         //Enemy 1 presets go here
     } else if(type === "2") {
@@ -1115,15 +1157,62 @@ function enemyPresets(type, num) {
     }
 }
 
+function is_pause() {
+    if (press_again) {
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "p" && press_again) {
+                if (paused) {
+                    console.log("paused")
+                    let pauseimg = new Image()
+                    pauseimg.src = "Backgrounds/Paused.png"
+
+                    let ctx = GameArea.context
+
+                    ctx.drawImage(pauseimg, 1280/2 - 145/2, 720/2 - 150/2, 145, 150)
+
+                    paused = false
+                } else if (press_again) {
+                    console.log("unpaused")
+                    paused = true
+                }
+                press_again = false
+            }
+        })
+
+        document.removeEventListener("keydown", (event) => {
+            if (event.key == "p" && press_again) {
+                if (paused) {
+                    paused = false
+                } else if (press_again) {
+                    paused = true
+                }
+                press_again = false
+            }
+        })
+    } else {
+        document.addEventListener("keyup", (event) => {
+            if (event.key === "p") {
+                press_again = true
+            }
+        })
+
+        document.removeEventListener("keyup", (event) => {
+            if (event.key === "p") {
+                press_again = true
+            }
+        })
+    }
+}
+
 createBulletEnemy(-100, 0, "outside", 0, 0, 0, 1)
 createBulletPlayer(-100, 0, "outside", 0, 0, 0, 1) //Preloads bullet so img doesn't dissappear
+preloadImg("Sprites/Enemies/Enemy2/basic.png")
+preloadImg("Backgrounds/Paused.png")
 deathExpl(-100, -100, "test")
 createBackground(0, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 //getBGroundPreset("large", 250)
 //createEnemy(1280, 355, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400)
-
-enemyPresets("2", "3")
 
 let start = new StartScreen(true)
 
@@ -1144,21 +1233,25 @@ let layer = new Player({
 )
 
 function updateGameArea() {
-    GameArea.clear();
+    if (paused) {
+        GameArea.clear();
 
-    let ctx = GameArea.context;
+        let ctx = GameArea.context;
 
-    if (startGame) {
-    spawn_controller()
-    spawn_queue()
+        if (start_game) {
+            spawn_controller()
+        }
+
+        updateBGround(ctx)
+        updateDeaths(ctx)
+        updateEnemies(ctx)
+
+        layer.refresh()
+        updateProjectiles(ctx)
+
+        updateStart(ctx)
+        spawn_queue()
     }
 
-    updateBGround(ctx)
-    updateDeaths(ctx)
-    updateEnemies(ctx)
-
-    layer.refresh()
-    updateProjectiles(ctx)
-
-    updateStart(ctx)
+    is_pause()
 }
