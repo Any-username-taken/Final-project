@@ -659,7 +659,7 @@ class Enemy extends Sprite {
 
     type_shoot() {
         if (this.type === "1" && this.cooldown < 0.1) {
-            this.spawn_bullet()
+            this.spawn_bullet2()
         }
         if (this.type === "2" && this.cooldown < 0.1) {
             this.spawn_bullet()
@@ -673,6 +673,13 @@ class Enemy extends Sprite {
         this.playSound()
         this.pos.x -= Math.cos(this.angle) * 5;
         this.pos.y -= Math.sin(this.angle) * 5;
+    }
+
+    spawn_bullet2() {
+        this.anim_len = 0.2
+        createBulletEnemy(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "E", this.angle + (this.ran_bullet_angle(-10, 10))/100, this.damage, 10, 10)
+        this.cooldown = this.firerate
+        this.playSound()
     }
 
     ran_bullet_angle(min, max) {
@@ -930,6 +937,51 @@ class StartScreen {
     }
 }
 
+class complete_level {
+    constructor() {
+        this.costume = 1
+
+        this.image = new Image()
+        this.image.src = `Backgrounds/Complete/level completed${this.costume}.png`
+
+        this.timeBetween = 0.2
+
+        this.opacity = 1
+    }
+
+    update() {
+        this.change_costume()
+
+        let ctx = GameArea.context
+
+        ctx.save();
+
+        ctx.translate(1230/2, 400)
+
+        ctx.drawImage(this.image, -1730/2, -131/2, 1730, 131);
+
+        ctx.restore()
+
+        this.check()
+    }
+
+    change_costume() {
+        if (this.timeBetween < 0.1 && this.costume <= 25) {
+            this.costume += 1
+            this.image.src = `Backgrounds/Complete/level completed${this.costume}.png`
+            this.timeBetween = 0.2
+        } else {
+            this.timeBetween -= 0.1
+        }
+    }
+
+    check() {
+        if (this.costume === 25) {
+            this.opacity = 0
+        }
+    }
+}
+
 function preloadImg(source) {
     let newBullet = new Bullet({
         width: 100,
@@ -1016,6 +1068,12 @@ function createBackground(Xp, Yp, scaleX, scaleY, type, speed, src) {
     )
 
     bGroundObj.unshift(newBground)
+}
+
+function createLevelFinish() {
+    let end = new complete_level()
+
+    deaths.push(end)
 }
 
 function deathExpl(Xp, Yp, type) {
@@ -1111,6 +1169,13 @@ function updateEnemies(context) {
     }
 }
 
+function ran_num(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    let ran = Math.floor(Math.random() * (max - min + 1)) + min;
+    return ran
+}
+
 function getBGroundPreset(preset, Y) {
     if (preset === "small1") {
         createBackground(1280, Y, 590*1.5, 350*1.5, "none", -0.4, "Backgrounds/Xtra/Planet 1.png")
@@ -1122,6 +1187,20 @@ function getBGroundPreset(preset, Y) {
 
     if (preset === "large") {
         createBackground(1280, 200, 590*2.5, 550*2.5, "none", -0.1, "Backgrounds/Xtra/Planet BIG.png")
+    }
+}
+
+function bGorundLoop() {
+    if (bGroundObj.length < 3) {
+        let ran = ran_num(1, 3)
+
+        if (ran === 1) {
+            getBGroundPreset("small1", ran_num(180, 670))
+        } else if (ran === 2) {
+            getBGroundPreset("small2", ran_num(180, 670))
+        } else if (ran === 3) {
+            getBGroundPreset("large", "already set")
+        }
     }
 }
 
@@ -1200,6 +1279,9 @@ function spawn_controller() { //USE THIS ONE IN MAIN LOOP
             }
         } else {
             if (levelEnd && containEnemy.length === 0) {
+                if (wait === 3) {
+                    createLevelFinish()
+                }
             wait -= 0.01
             } else if (levelEnd === false) {
                 wait -= 0.01
@@ -1229,6 +1311,12 @@ function enemyPresets(type, num) {
             spawn.push([[1280, 600, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 10])
             spawn.push([[1280, 550, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 4.5])
             spawn.push([[1280, 500, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 4.5])
+        } else if (num === "2") {
+            spawn.push([[1280, 355, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 0])
+            spawn.push([[1280, 305, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 4.5])
+            spawn.push([[1280, 405, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 0])
+            spawn.push([[1280, 455, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 4.5])
+            spawn.push([[1280, 255, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 0])
         }
     } else if(type === "2") {
         if (num === "1") {
@@ -1294,12 +1382,99 @@ function is_pause() {
     }
 }
 
+function restart() {
+    layer = null
+    b_ground = null;
+    paused = true
+    press_again = true
+    mainMusic = new Audio("Audio/Music/0416.MP3")
+    projectiles = []
+    bGroundObj = []
+    containEnemy = []
+    spawn = []
+    deaths = []
+    start_game = false
+    level = 0
+    lel_spawn = ''
+    wait = 2
+    levelEnd = false
+
+    console.log("player died :(")
+
+    createBulletEnemy(-100, 0, "outside", 0, 0, 0, 1)
+    createBulletPlayer(-100, 0, "outside", 0, 0, 0, 1) //Preloads bullet so img doesn't dissappear
+    preloadImg("Sprites/Enemies/Enemy2/basic.png")
+    preloadImg("Backgrounds/Paused.png")
+    preloadImg("Sprites/DeathSplosions/Dmg.png")
+    preloadImg("Sprites/Enemies/Enemy1/common.png")
+    preloadImg("Backgrounds/Complete/level completed1.png")
+    preloadImg("Backgrounds/Complete/level completed2.png")
+    preloadImg("Backgrounds/Complete/level completed3.png")
+    preloadImg("Backgrounds/Complete/level completed4.png")
+    preloadImg("Backgrounds/Complete/level completed5.png")
+    preloadImg("Backgrounds/Complete/level completed6.png")
+    preloadImg("Backgrounds/Complete/level completed7.png")
+    preloadImg("Backgrounds/Complete/level completed8.png")
+    preloadImg("Backgrounds/Complete/level completed9.png")
+    preloadImg("Backgrounds/Complete/level completed10.png")
+    preloadImg("Backgrounds/Complete/level completed11.png")
+    preloadImg("Backgrounds/Complete/level completed12.png")
+    preloadImg("Backgrounds/Complete/level completed13.png")
+    preloadImg("Backgrounds/Complete/level completed14.png")
+    preloadImg("Backgrounds/Complete/level completed15.png")
+    preloadImg("Backgrounds/Complete/level completed16.png")
+    preloadImg("Backgrounds/Complete/level completed17.png")
+    preloadImg("Backgrounds/Complete/level completed18.png")
+    preloadImg("Backgrounds/Complete/level completed19.png")
+    preloadImg("Backgrounds/Complete/level completed20.png")
+    preloadImg("Backgrounds/Complete/level completed21.png")
+    preloadImg("Backgrounds/Complete/level completed22.png")
+    preloadImg("Backgrounds/Complete/level completed23.png")
+    preloadImg("Backgrounds/Complete/level completed24.png")
+    preloadImg("Backgrounds/Complete/level completed25.png")
+    deathExpl(-100, -100, "test")
+    createBackground(0, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
+    createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
+
+    layer = create_player()
+    layer.can_control = true
+
+    startGame()
+
+    start_game = true
+}
+
 createBulletEnemy(-100, 0, "outside", 0, 0, 0, 1)
 createBulletPlayer(-100, 0, "outside", 0, 0, 0, 1) //Preloads bullet so img doesn't dissappear
 preloadImg("Sprites/Enemies/Enemy2/basic.png")
 preloadImg("Backgrounds/Paused.png")
 preloadImg("Sprites/DeathSplosions/Dmg.png")
 preloadImg("Sprites/Enemies/Enemy1/common.png")
+preloadImg("Backgrounds/Complete/level completed1.png")
+preloadImg("Backgrounds/Complete/level completed2.png")
+preloadImg("Backgrounds/Complete/level completed3.png")
+preloadImg("Backgrounds/Complete/level completed4.png")
+preloadImg("Backgrounds/Complete/level completed5.png")
+preloadImg("Backgrounds/Complete/level completed6.png")
+preloadImg("Backgrounds/Complete/level completed7.png")
+preloadImg("Backgrounds/Complete/level completed8.png")
+preloadImg("Backgrounds/Complete/level completed9.png")
+preloadImg("Backgrounds/Complete/level completed10.png")
+preloadImg("Backgrounds/Complete/level completed11.png")
+preloadImg("Backgrounds/Complete/level completed12.png")
+preloadImg("Backgrounds/Complete/level completed13.png")
+preloadImg("Backgrounds/Complete/level completed14.png")
+preloadImg("Backgrounds/Complete/level completed15.png")
+preloadImg("Backgrounds/Complete/level completed16.png")
+preloadImg("Backgrounds/Complete/level completed17.png")
+preloadImg("Backgrounds/Complete/level completed18.png")
+preloadImg("Backgrounds/Complete/level completed19.png")
+preloadImg("Backgrounds/Complete/level completed20.png")
+preloadImg("Backgrounds/Complete/level completed21.png")
+preloadImg("Backgrounds/Complete/level completed22.png")
+preloadImg("Backgrounds/Complete/level completed23.png")
+preloadImg("Backgrounds/Complete/level completed24.png")
+preloadImg("Backgrounds/Complete/level completed25.png")
 deathExpl(-100, -100, "test")
 createBackground(0, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
@@ -1308,21 +1483,26 @@ createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bgroun
 
 let start = new StartScreen(true)
 
+function create_player() {    
+    let layer = new Player({
+        width: 313*imagesScale, 
+        height: 207*imagesScale, 
+        source: playerSprite
+        }, //imgParamaters
+        "Sprites/Player/basic ship2.png", // 2nd img
+        {x: 1280/2, y: 720/2},//pos
+        "1", //type represents the player's ship (basic actions etc.)
+        1.5, //angle
+        20, //health
+        1.5, //firerate
+        10, //speed
+        0.5 //damage
+    )
 
-let layer = new Player({
-    width: 313*imagesScale, 
-    height: 207*imagesScale, 
-    source: playerSprite
-    }, //imgParamaters
-    "Sprites/Player/basic ship2.png", // 2nd img
-    {x: 1280/2, y: 720/2},//pos
-    "1", //type represents the player's ship (basic actions etc.)
-    1.5, //angle
-    20, //health
-    1.5, //firerate
-    10, //speed
-    0.5 //damage
-)
+    return layer
+}
+
+let layer = create_player()
 
 function updateGameArea() {
     if (paused) {
@@ -1343,7 +1523,13 @@ function updateGameArea() {
 
         updateStart(ctx)
         spawn_queue()
+
+        bGorundLoop()
     }
 
     is_pause()
+
+    if (layer.health <= 0) {
+        restart()
+    }
 }
