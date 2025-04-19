@@ -466,6 +466,7 @@ class Player extends Sprite{
     }
 
     hit(damage) {
+        deathExpl(-150, 720/2 + 50, "dmg")
         if (this.health - damage < 0.1) {
             this.health = 0
         } else {
@@ -529,9 +530,11 @@ class Enemy extends Sprite {
         this.isDead = false
 
         this.enter = false
+        this.loop = 0
 }
 
     refresh() {
+        this.rotate()
         this.checkDeath()
         this.update_health()
         this.move_behavior()
@@ -566,10 +569,77 @@ class Enemy extends Sprite {
 
     move_behavior() {
         if (this.type === "1") {
-            if (this.enter === 1) {
-                if (this.pos.x <= 1280/2) {
-                    
-                }
+            if (this.pos.x > 1080 && this.enter === false) {
+                this.pos.x -= this.mSpeed
+            } else if (this.enter === false) {
+                this.enter = 1
+                this.turn = true
+                this.loop = 30
+                this.mSpeed = 1
+            } else if (this.enter === 1 && this.loop > 0) {
+                this.pos.x -= this.mSpeed
+                this.loop -= 1
+            } else if (this.enter === 1) {
+                this.enter = 2
+                this.loop = 50
+            } else if (this.enter === 2 && this.loop > 0) {
+                this.mSpeed += 0.1
+                this.pos.x -= this.mSpeed
+                this.loop -= 1
+            } else if (this.enter === 2) {
+                this.enter = 3
+                this.loop = 100
+            } else if (this.enter === 3 && this.loop > 0) {
+                this.pos.x -= this.mSpeed
+                this.loop -= 1
+            } else if (this.enter === 3) {
+                this.enter = 4
+                this.loop = 50
+            } else if (this.enter === 4 && this.loop > 0) {
+                this.mSpeed -= 0.1
+                this.pos.x -= this.mSpeed
+                this.loop -= 1
+            } else if (this.enter === 4) {
+                this.enter = 5
+                this.loop = 20
+            } else if (this.enter === 5 && this.loop > 0) {
+                this.loop -= 1
+            } else if (this.enter === 5) {
+                this.enter = 6
+                this.mSpeed = 1
+                this.loop = 30
+            } else if (this.enter === 6 && this.loop > 0) {
+                this.pos.x += 1
+                this.loop -= 1
+            } else if (this.enter === 6) {
+                this.enter = 7
+                this.loop = 50
+            } else if (this.enter === 7 && this.loop > 0) {
+                this.mSpeed += 0.1
+                this.pos.x += this.mSpeed
+                this.loop -= 1
+            } else if (this.enter === 7) {
+                this.enter = 8
+                this.loop = 100
+            } else if (this.enter === 8 && this.loop > 0) {
+                this.pos.x += this.mSpeed
+                this.loop -= 1
+            } else if (this.enter === 8) {
+                this.enter = 9
+                this.loop = 50
+            } else if (this.enter === 9 && this.loop > 0) {
+                this.mSpeed -= 0.1
+                this.pos.x += this.mSpeed
+                this.loop -= 1
+            } else if (this.enter === 9) {
+                this.enter = 10
+                this.loop = 20
+            } else if (this.enter === 10 && this.loop > 0) {
+                this.loop -= 1
+            } else if (this.enter === 10) {
+                this.enter = 1
+                this.loop = 30
+                this.mSpeed = 1
             }
         }
 
@@ -588,6 +658,9 @@ class Enemy extends Sprite {
     }
 
     type_shoot() {
+        if (this.type === "1" && this.cooldown < 0.1) {
+            this.spawn_bullet()
+        }
         if (this.type === "2" && this.cooldown < 0.1) {
             this.spawn_bullet()
         }
@@ -781,10 +854,20 @@ class Death{
         this.type = type
 
         this.image = new Image()
+
+        if (this.type === "dmg") {
+            this.image.src = ("Sprites/DeathSplosions/Dmg.png")
+        } else {
         this.image.src = source
-
+        }
+        if (this.type === "dmg") {
+            this.imgPar = {
+                width: 1800,
+                height: 1300
+            }
+        } else {
         this.imgPar = imgPar
-
+        }
         this.opacity = 1
     }
 
@@ -1139,7 +1222,14 @@ function spawn_queue() {
 function enemyPresets(type, num) {
     // type is the enemy type, and num is the number of preset for that enemy type. This is a replica of a system that I made in scratch.
     if (type === "1") {
-        //Enemy 1 presets go here
+        if (num === "1") {
+            spawn.push([[1280, 50, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 0])
+            spawn.push([[1280, 100, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 4.5])
+            spawn.push([[1280, 150, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 4.5])
+            spawn.push([[1280, 600, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 10])
+            spawn.push([[1280, 550, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 4.5])
+            spawn.push([[1280, 500, "1", 3.15, 3, 10, 25, "Sprites/Enemies/Enemy1/common.png", "Sprites/Enemies/Enemy1/common2.png", 290*1.5, 250*1.5, 63], 4.5])
+        }
     } else if(type === "2") {
         if (num === "1") {
             spawn.push([[1280, 355, "2", 3.15, 3, 20, 6, "Sprites/Enemies/Enemy2/basic.png", "Sprites/Enemies/Enemy2/basic2.png", 920, 400], 0])
@@ -1208,6 +1298,8 @@ createBulletEnemy(-100, 0, "outside", 0, 0, 0, 1)
 createBulletPlayer(-100, 0, "outside", 0, 0, 0, 1) //Preloads bullet so img doesn't dissappear
 preloadImg("Sprites/Enemies/Enemy2/basic.png")
 preloadImg("Backgrounds/Paused.png")
+preloadImg("Sprites/DeathSplosions/Dmg.png")
+preloadImg("Sprites/Enemies/Enemy1/common.png")
 deathExpl(-100, -100, "test")
 createBackground(0, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")
 createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bground Final.png")

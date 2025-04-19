@@ -32,7 +32,7 @@ File reading goes as follows:
 
 Enemy Type - Preset - seconds until next - enemies left - continue/wait stage end/shop - finished spawn?
 |
-2~1~1.5~0~Continue~false~Spawn E 2 set 1 continue to next wave after 1.5 or 0 enemies left
+1~1~1.5~0~Continue~false~Spawn E 2 set 1 continue to next wave after 1.5 or 0 enemies left
 2~2~0~0~Stop~false~Spawn E 2 set 1 Stop until 0 enemies left
 2~1~5~1~Continue~false~Spawn E 2 set 1 continue after 2s or until 1 enemies left
 2~1~999~0~Continue~false~Spawn E 2 set 1 continue after 999s or until 0 enemies left
