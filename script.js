@@ -1,15 +1,38 @@
 "use strict";
 
+let fileData = '';
+
+fetch('Levels.txt')
+  .then(response => response.text())
+  .then(data => {
+    fileData = data; // Assign the fetched text to the variable
+    useFileData(fileData); // Optionally use it in a function
+  })
+  .catch(error => {
+    console.error('Error loading the file:', error);
+  });
+
+function useFileData(data) {
+    
+    fileData = data.split("|")[1].split("\n")
+    fileData.shift()
+}
+
+
 //variables
 let player;
 let b_ground;
 let stars1;
-let mainMusic = new Audio("Audio/0416.MP3")
+let mainMusic = new Audio("Audio/Music/0416.MP3")
 let projectiles = []
 let bGroundObj = []
 let containEnemy = []
 let spawn = []
 let deaths = []
+let start_game = false
+let level = 0
+let lel_spawn = ''
+let wait = 0
 
 // 6.3 === full rotation new Component(..., angle)
 // 3.25 === Half rotation
@@ -139,7 +162,7 @@ class Background extends Sprite{
 //Player class parent is Sprite
 
 class Player extends Sprite{
-    constructor(imgPar, imgbonus, pos, type, angle, health, firerate, maxSpeed, damage=1) {
+    constructor(imgPar, imgbonus, pos, type, angle, health, firerate, maxSpeed, damage=1, control=false) {
         super(imgPar, pos, type, angle, health)
 
         this.Hp_bar = new HealthBar(this.health, this.health, this.pos.x + this.imgPar.width/2, -10)
@@ -161,6 +184,8 @@ class Player extends Sprite{
         this.mouseD = false
 
         this.damage = damage
+        
+        this.can_control = control
     }
 
     refresh() {
@@ -199,17 +224,20 @@ class Player extends Sprite{
     }
     
     get_angle() {
+        if (this.can_control){
         this.get_mouse_pos()
         let dy = this.mouseY - this.pos.y;
         let dx = this.mouseX - this.pos.x;
 
         this.angle = Math.atan2(dy, dx);
+        }
     }
 
     get_translate() {
+        if (this.can_control){
         this.pos.y += this.velY
         this.pos.x += this.velX
-        
+        }
         
 
         //Screen wrap top-bottom
@@ -254,6 +282,7 @@ class Player extends Sprite{
     }
 
     get_keydowns() {
+        if (this.can_control){
         if (this.keypress.w) {
             if (this.velY < 0 - this.mSpeed){
 
@@ -282,6 +311,7 @@ class Player extends Sprite{
             } else {
             this.velX += 0.5
             }
+        }
         }
     }
 
@@ -446,14 +476,17 @@ class Player extends Sprite{
         if (variable === 1) {
             this.stopSound()
             this.bulletSound = new Audio("Audio/soundEffects/Pew.mp3")
+            this.bulletSound.volume = 0.2
             this.bulletSound.play()
         } else if (variable === 2) {
             this.stopSound()
             this.bulletSound = new Audio("Audio/soundEffects/Pew2.mp3")
+            this.bulletSound.volume = 0.2
             this.bulletSound.play()
         } else {
             this.stopSound()
             this.bulletSound = new Audio("Audio/soundEffects/Pew3.mp3")
+            this.bulletSound.volume = 0.2
             this.bulletSound.play()
         }
     }
@@ -475,6 +508,8 @@ class Enemy extends Sprite {
 
         this.imageBonus = new Image()
         this.imageBonus.src = imgbonus
+
+        this.bulletSound = new Audio("Audio/soundEffects/Pew.mp3")
 
         this.firerate = firerate
         this.cooldown = this.firerate
@@ -544,7 +579,7 @@ class Enemy extends Sprite {
     }
 
     type_shoot() {
-        if (this.type === "2" && this.cooldown < 0.1) {
+        if (this.type === "2" || this.type === "1" && this.cooldown < 0.1) {
             this.spawn_bullet()
         }
     }
@@ -553,6 +588,7 @@ class Enemy extends Sprite {
         this.anim_len = 0.2
         createBulletEnemy(this.pos.x + this.imgPar.width/8, this.pos.y + this.imgPar.height/4, "E", this.angle + (this.ran_bullet_angle(-10, 10))/100, this.damage, 20, 10)
         this.cooldown = this.firerate
+        this.playSound()
         this.pos.x -= Math.cos(this.angle) * 5;
         this.pos.y -= Math.sin(this.angle) * 5;
     }
@@ -593,6 +629,34 @@ class Enemy extends Sprite {
         if (this.health < 0.1) {
             deathExpl(this.pos.x, this.pos.y, "small")
             this.isDead = true
+        }
+    }
+
+    playSound() {
+        let variable = this.ran_bullet_angle(1, 3)
+
+        if (variable === 1) {
+            this.stopSound()
+            this.bulletSound = new Audio("Audio/soundEffects/Pew.mp3")
+            this.bulletSound.volume = 0.2
+            this.bulletSound.play()
+        } else if (variable === 2) {
+            this.stopSound()
+            this.bulletSound = new Audio("Audio/soundEffects/Pew2.mp3")
+            this.bulletSound.volume = 0.2
+            this.bulletSound.play()
+        } else {
+            this.stopSound()
+            this.bulletSound = new Audio("Audio/soundEffects/Pew3.mp3")
+            this.bulletSound.volume = 0.2
+            this.bulletSound.play()
+        }
+    }
+
+    stopSound() {
+        if (this.bulletSound) {
+            this.bulletSound.pause()
+            this.bulletSound.currentTime = 0
         }
     }
 
@@ -708,7 +772,6 @@ class Death{
         this.type = type
 
         this.image = new Image()
-        console.log(source)
         this.image.src = source
 
         this.imgPar = imgPar
@@ -740,6 +803,38 @@ class Death{
         if (this.opacity > 0.1 && this.type !== "test") {
             this.opacity -= 0.1
         }
+    }
+}
+
+class StartScreen {
+    constructor(active) {
+        this.active = active
+
+        this.image = new Image()
+        this.image.src = "Backgrounds/Play screen.png"
+    }
+
+    update() {
+        this.check()
+
+        let ctx = GameArea.context
+
+        ctx.save();
+        
+        ctx.translate(1280/2, 720/2);
+
+        ctx.drawImage(this.image, -1280/2, -720/2, 1280, 720);
+
+        ctx.restore()
+
+    }
+    
+    check() {
+        document.addEventListener("mousedown", (event) => {
+            if (event.button === 0) {
+                this.active = false
+            }
+        })
     }
 }
 
@@ -823,6 +918,35 @@ function deathExpl(Xp, Yp, type) {
     deaths.push(newExpl)
 }
 
+function updateStart() {
+    if (start) {
+        start.update()
+
+        if (start.active) {
+            // Nothing I guess
+        } else {
+            mainMusic.play()
+            layer.can_control = true
+            start = null
+        }
+    } else {
+        if (mainMusic) {
+            mainMusic.addEventListener('ended', function() {
+                mainMusic.currentTime = 0
+                mainMusic.play()
+            })
+            
+            mainMusic.removeEventListener('ended', function() {
+                mainMusic.currentTime = 0
+                mainMusic.play()
+            })
+        } else {
+            console.log("play again?")
+            mainMusic.play()
+        }
+    }
+}
+
 function updateDeaths(context) {
     for (let i = deaths.length - 1; i >= 0; i--) {
         let current = deaths[i];
@@ -903,11 +1027,63 @@ function checkCollision(projectile, target) {
   }
 
 function spawn_controller() { //USE THIS ONE IN MAIN LOOP
-
+    if (fileData) {
+        if (lel_spawn) {
+            if (lel_spawn[5] === "false") {
+                enemyPresets(lel_spawn[0], lel_spawn[1])
+                lel_spawn[5] = "true"
+            } else {
+                if (lel_spawn[4] === "Continue") {
+                    if (lel_spawn[3] < 0) {
+                        if (lel_spawn[2] < 0.1) {
+                            level += 1
+                            lel_spawn = null
+                        } else {
+                            lel_spawn[2] -= 0.1
+                        }
+                    } else {
+                        if (containEnemy.length <= lel_spawn[3] || lel_spawn[2] < 0.1) {
+                            level += 1
+                            lel_spawn = null
+                        } else {
+                            lel_spawn[2] -= 0.1
+                        }
+                    }
+                } else {
+                    if (lel_spawn[3] < 0) {
+                        if (lel_spawn[2] < 0.1) {
+                            level += 1
+                            lel_spawn = null
+                            wait = 10
+                        } else {
+                            lel_spawn[2] -= 0.1
+                        }
+                    } else {
+                        if (containEnemy.length <= lel_spawn[3] || lel_spawn[2] < 0.1) {
+                            level += 1
+                            lel_spawn = null
+                            wait = 10
+                        } else {
+                            lel_spawn[2] -= 0.1
+                        }
+                    }
+                }
+            }
+        } else if (wait < 0.1 && level < fileData.length) {
+            console.log(fileData)
+            lel_spawn = fileData[level].split("~")
+            console.log(lel_spawn)
+            lel_spawn[2] = parseInt(lel_spawn[2])
+            lel_spawn[3] = parseInt(lel_spawn[3])
+        } else {
+            wait -= 0.1
+        }
+    }
 }
 
 function spawn_queue() {
     if (spawn.length) {
+        console.log(spawn)
         if (spawn[0][1] < 0.1) {
             createEnemy(spawn[0][0][0], spawn[0][0][1], spawn[0][0][2], spawn[0][0][3],spawn[0][0][4], spawn[0][0][5], spawn[0][0][6], spawn[0][0][7], spawn[0][0][8], spawn[0][0][9], spawn[0][0][10])
             spawn.shift()
@@ -919,7 +1095,7 @@ function spawn_queue() {
 
 function enemyPresets(type, num) {
     // type is the enemy type, and num is the number of preset for that enemy type. This is a replica of a system that I made in scratch.
-
+    console.log(spawn)
     if (type === "1") {
         //Enemy 1 presets go here
     } else if(type === "2") {
@@ -949,6 +1125,8 @@ createBackground(1280, -100, 1280, 900, "stars", -0.1, "Backgrounds/Final Bgroun
 
 enemyPresets("2", "3")
 
+let start = new StartScreen(true)
+
 
 let layer = new Player({
     width: 313*imagesScale, 
@@ -956,7 +1134,7 @@ let layer = new Player({
     source: playerSprite
     }, //imgParamaters
     "Sprites/Player/basic ship2.png", // 2nd img
-    {x: 0, y: 0},//pos
+    {x: 1280/2, y: 720/2},//pos
     "1", //type represents the player's ship (basic actions etc.)
     1.5, //angle
     20, //health
@@ -965,14 +1143,15 @@ let layer = new Player({
     0.5 //damage
 )
 
-mainMusic.play()
-
 function updateGameArea() {
     GameArea.clear();
 
     let ctx = GameArea.context;
 
+    if (startGame) {
+    spawn_controller()
     spawn_queue()
+    }
 
     updateBGround(ctx)
     updateDeaths(ctx)
@@ -980,4 +1159,6 @@ function updateGameArea() {
 
     layer.refresh()
     updateProjectiles(ctx)
+
+    updateStart(ctx)
 }

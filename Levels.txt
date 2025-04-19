@@ -26,7 +26,7 @@ shop is closed.
 finished spawn? is just a boolean to check if the enemies were already spawned. True if yes, False
 if no.
 
-Remember to delete first | split and delete first \n split (idk what it is in javascript)
+Remember to delete first split and delete first \n split (idk what it is in javascript)
 
 File reading goes as follows:
 
